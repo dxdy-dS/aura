@@ -44,6 +44,52 @@ function deriveCondition(
   return "clear";
 }
 
+// Feels-like temperature (wind chill for cold, heat index for hot)
+function feelsLike(tempC: number, windKmh: number, humidity: number): number {
+  const v = windKmh;
+  const T = tempC;
+  // Wind Chill (below 10°C and wind > 4.8 km/h)
+  if (T <= 10 && v > 4.8) {
+    const wc = 13.12 + 0.6215 * T - 11.37 * Math.pow(v, 0.16) + 0.3965 * T * Math.pow(v, 0.16);
+    return Math.round(wc * 10) / 10;
+  }
+  // Heat Index (above 27°C and humidity > 40%)
+  if (T >= 27 && humidity > 40) {
+    const hi = -8.785 + 1.611 * T + 2.339 * humidity
+      - 0.1461 * T * humidity - 0.01231 * T * T - 0.01642 * humidity * humidity
+      + 0.002212 * T * T * humidity + 0.000725 * T * humidity * humidity
+      - 0.000003582 * T * T * humidity * humidity;
+    return Math.round(hi * 10) / 10;
+  }
+  return Math.round(T * 10) / 10;
+}
+
+// Simple sunrise/sunset estimation (solar calculation)
+function sunTimes(lat: number, lon: number, date: Date): { sunrise: number; sunset: number } {
+  const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
+  const dec = -23.45 * Math.cos((2 * Math.PI / 365) * (dayOfYear + 10));
+  const decRad = (dec * Math.PI) / 180;
+  const latRad = (lat * Math.PI) / 180;
+  const cosHA = (-Math.sin(0.833 * Math.PI / 180) + Math.sin(latRad) * Math.sin(decRad)) / (Math.cos(latRad) * Math.cos(decRad));
+  if (cosHA > 1) return { sunrise: 6 * 3600, sunset: 18 * 3600 }; // polar night
+  if (cosHA < -1) return { sunrise: 0, sunset: 24 * 3600 }; // midnight sun
+  const HA = (Math.acos(cosHA) * 180) / Math.PI;
+  const solarNoon = 12 - lon / 15;
+  const tzOffset = date.getTimezoneOffset() / 60;
+  const sunrise = (solarNoon - HA / 15 - tzOffset) * 3600;
+  const sunset = (solarNoon + HA / 15 - tzOffset) * 3600;
+  return { sunrise, sunset };
+}
+
+// Thunderstorm alert level based on CAPE
+function thunderAlert(cape: number): { level: string; label: string } {
+  if (cape > 4000) return { level: "extreme", label: "Badai Ekstrem" };
+  if (cape > 2500) return { level: "high", label: "Badai Berat" };
+  if (cape > 1000) return { level: "moderate", label: "Badai Ringan" };
+  if (cape > 500) return { level: "low", label: "Konveksi" };
+  return { level: "none", label: null };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
@@ -122,11 +168,14 @@ export async function GET(request: Request) {
     const { speed: cWindSpeed, deg: cWindDeg } = calcWind(windU[0] || 0, windV[0] || 0);
     const currentClouds = Math.max(lclouds[0] || 0, mclouds[0] || 0, hclouds[0] || 0);
     const currentCondition = deriveCondition(precip[0] || 0, ptype[0] || 0, currentClouds, cape[0] || 0, gusts[0] || 0);
+    const fl = feelsLike(temps[0], cWindSpeed, humidity[0] || 0);
+    const storm = thunderAlert(cape[0] || 0);
+    const sun = sunTimes(parseFloat(lat), parseFloat(lon), new Date(ts[0]));
 
     const current = {
       dt: ts[0] / 1000,
       temp: Math.round(temps[0] * 10) / 10,
-      feelsLike: Math.round(temps[0] * 10) / 10, // simplified
+      feelsLike: fl,
       tempMin: Math.round(temps[0] * 10) / 10,
       tempMax: Math.round(temps[0] * 10) / 10,
       dewpoint: Math.round(dewpoints[0] * 10) / 10,
@@ -142,6 +191,9 @@ export async function GET(request: Request) {
       condition: currentCondition,
       cape: Math.round(cape[0] || 0),
       visibility: 20000, // not directly available from Windy
+      sunrise: sun.sunrise,
+      sunset: sun.sunset,
+      thunderAlert: storm,
     };
 
     // Build hourly forecast (up to 48 hours)
@@ -257,9 +309,15 @@ export async function GET(request: Request) {
       current.tempMax = daily[0].tempMax;
     }
 
+    // Add feelsLike and thunderAlert to hourly
+    const hourlyWithFeel = hourly.map(h => ({
+      ...h,
+      feelsLike: feelsLike(h.temp, h.windSpeed, h.humidity),
+    }));
+
     const result = {
       current,
-      hourly,
+      hourly: hourlyWithFeel,
       daily,
       meta: {
         model: "gfs",

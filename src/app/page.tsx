@@ -242,6 +242,9 @@ export default function Home() {
                   dewpoint={weather.dewpoint}
                   cape={weather.cape}
                   snow={weather.snow}
+                  sunrise={weather.sunrise}
+                  sunset={weather.sunset}
+                  thunderAlert={weather.thunderAlert}
                 />
 
                 {hourly && hourly.length > 0 && <HourlyForecast list={hourly} />}

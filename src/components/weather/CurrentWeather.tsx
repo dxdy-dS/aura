@@ -13,6 +13,8 @@ import {
   Sunrise,
   Sunset,
   Sun,
+  Zap,
+  CloudFog,
 } from "lucide-react";
 import {
   formatTemp,
@@ -20,8 +22,12 @@ import {
   getVisibilityLabel,
   getConditionLabel,
   getCloudCoverLabel,
-  getUVLevel,
 } from "@/lib/weather";
+
+interface ThunderAlertData {
+  level: string;
+  label: string;
+}
 
 interface CurrentWeatherProps {
   city: string;
@@ -39,9 +45,13 @@ interface CurrentWeatherProps {
   condition: string;
   visibility: number;
   weatherIcon: string;
+  dewpoint?: number;
+  cape?: number;
+  snow?: number;
   sunrise?: number;
   sunset?: number;
   uvIndexMax?: number;
+  thunderAlert?: ThunderAlertData;
 }
 
 export default function CurrentWeather({
@@ -60,12 +70,14 @@ export default function CurrentWeather({
   condition,
   visibility,
   weatherIcon,
+  dewpoint,
+  cape,
+  snow,
   sunrise,
   sunset,
-  uvIndexMax,
+  thunderAlert,
 }: CurrentWeatherProps) {
   const conditionLabel = getConditionLabel(condition);
-  const uvInfo = uvIndexMax ? getUVLevel(uvIndexMax) : null;
 
   const sunriseTime = sunrise
     ? new Date(sunrise * 1000).toLocaleTimeString("id-ID", {
@@ -81,6 +93,16 @@ export default function CurrentWeather({
       })
     : "--:--";
 
+  // Determine alert color for CAPE
+  const capeAlertColor =
+    thunderAlert?.level === "extreme"
+      ? "text-red-400 bg-red-500/15"
+      : thunderAlert?.level === "high"
+        ? "text-orange-400 bg-orange-500/15"
+        : thunderAlert?.level === "moderate"
+          ? "text-yellow-400 bg-yellow-500/15"
+          : "text-white/50 bg-white/5";
+
   const details = [
     {
       icon: <Wind className="h-4 w-4" />,
@@ -92,6 +114,7 @@ export default function CurrentWeather({
       icon: <Droplets className="h-4 w-4" />,
       label: "Kelembapan",
       value: `${Math.round(humidity)}%`,
+      sub: dewpoint !== undefined ? `Titik Embun ${Math.round(dewpoint)}°` : undefined,
     },
     {
       icon: <Eye className="h-4 w-4" />,
@@ -107,6 +130,7 @@ export default function CurrentWeather({
       icon: <Thermometer className="h-4 w-4" />,
       label: "Terasa Seperti",
       value: formatTemp(feelsLike),
+      sub: feelsLike !== temp ? `${feelsLike > temp ? "Lebih panas" : "Lebih dingin"}` : "Sama",
     },
     {
       icon: <Cloud className="h-4 w-4" />,
@@ -118,12 +142,17 @@ export default function CurrentWeather({
       icon: <CloudRain className="h-4 w-4" />,
       label: "Curah Hujan",
       value: `${precip.toFixed(1)} mm`,
+      sub: snow !== undefined && snow > 0 ? `Salju ${snow.toFixed(1)} mm` : undefined,
     },
     {
       icon: <Sunrise className="h-4 w-4" />,
       label: "Matahari",
       value: `${sunriseTime} / ${sunsetTime}`,
-      sub: uvInfo ? `UV: ${uvInfo.label}` : undefined,
+      sub: thunderAlert?.label ? (
+        <span className={`text-[10px] px-1 py-0.5 rounded-full ${capeAlertColor}`}>
+          {thunderAlert.label}
+        </span>
+      ) : cape !== undefined && cape > 0 ? `CAPE ${cape}` : undefined,
     },
   ];
 
@@ -134,6 +163,38 @@ export default function CurrentWeather({
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="w-full max-w-lg mx-auto"
     >
+      {/* Thunderstorm Alert Banner */}
+      {thunderAlert && thunderAlert.level !== "none" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`mb-4 mx-1 flex items-center gap-2 px-4 py-2.5 rounded-xl backdrop-blur-sm border ${
+            thunderAlert.level === "extreme"
+              ? "bg-red-500/20 border-red-500/30"
+              : thunderAlert.level === "high"
+                ? "bg-orange-500/15 border-orange-500/25"
+                : "bg-yellow-500/10 border-yellow-500/20"
+          }`}
+        >
+          <Zap
+            className={`h-4 w-4 shrink-0 ${
+              thunderAlert.level === "extreme"
+                ? "text-red-400"
+                : thunderAlert.level === "high"
+                  ? "text-orange-400"
+                  : "text-yellow-400"
+            }`}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-white/80">{thunderAlert.label}</p>
+            <p className="text-[10px] text-white/50">
+              CAPE {cape} J/kg — Potensi konveksi signifikan
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Main Temperature Display */}
       <div className="text-center mb-6">
         <motion.div
