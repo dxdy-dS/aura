@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cuaca — Prakiraan Cuaca & Webcam Langsung",
   description:
-    "Aplikasi cuaca real-time dengan prakiraan per jam, 7 hari, peta cuaca interaktif, dan webcam langsung. Dibuat dengan Next.js 16 dan Open-Meteo.",
+    "Aplikasi cuaca real-time dengan prakiraan per jam, 7 hari, peta cuaca interaktif Windy, dan webcam langsung. Dibuat dengan Next.js 16 dan Windy API.",
   keywords: [
     "cuaca",
     "prakiraan",
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     "forecast",
     "webcam",
     "Indonesia",
-    "Open-Meteo",
     "Windy",
+    "Windy API",
     "Next.js",
   ],
   authors: [{ name: "d(x)d(y)" }],

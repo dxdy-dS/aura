@@ -11,7 +11,7 @@ import CurrentWeather from "@/components/weather/CurrentWeather";
 import HourlyForecast from "@/components/weather/HourlyForecast";
 import DailyForecast from "@/components/weather/DailyForecast";
 import LiveWebcams from "@/components/weather/LiveWebcams";
-import WindyMap from "@/components/weather/WindyMap";
+import WindyMap from "@/components/weather/WindyInteractiveMap";
 import WeatherParticles from "@/components/weather/WeatherParticles";
 import {
   getWeatherIcon,
