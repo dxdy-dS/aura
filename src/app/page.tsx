@@ -198,10 +198,46 @@ export default function Home() {
           <AnimatePresence mode="wait">
             {loading && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center py-20"
+                className="space-y-6"
               >
-                <Loader2 className="h-10 w-10 text-white/40 animate-spin" />
-                <p className="text-white/40 mt-4 text-sm">Mengambil data cuaca dari Windy...</p>
+                {/* Loading Skeleton */}
+                <div className="w-full max-w-lg mx-auto space-y-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="w-20 h-20 rounded-full bg-white/5 animate-pulse" />
+                    <div className="h-6 w-32 bg-white/5 rounded animate-pulse" />
+                    <div className="h-14 w-24 bg-white/5 rounded animate-pulse" />
+                    <div className="flex gap-3">
+                      <div className="h-5 w-16 bg-white/5 rounded animate-pulse" />
+                      <div className="h-5 w-16 bg-white/5 rounded animate-pulse" />
+                      <div className="h-5 w-20 bg-white/5 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
+                    <div className="grid grid-cols-4 gap-3">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="flex flex-col items-center space-y-2 p-3 rounded-xl bg-white/5">
+                          <div className="w-4 h-4 rounded bg-white/10 animate-pulse" />
+                          <div className="h-3 w-10 bg-white/10 rounded animate-pulse" />
+                          <div className="h-4 w-12 bg-white/10 rounded animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="max-w-2xl mx-auto space-y-2">
+                    <div className="h-4 w-28 bg-white/5 rounded animate-pulse" />
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
+                      <div className="flex gap-2 overflow-hidden">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="flex flex-col items-center min-w-[72px] p-3 rounded-xl bg-white/5 space-y-2">
+                            <div className="h-3 w-8 bg-white/10 rounded animate-pulse" />
+                            <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse" />
+                            <div className="h-4 w-8 bg-white/10 rounded animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
 

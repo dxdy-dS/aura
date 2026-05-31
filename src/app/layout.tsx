@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Cuaca — Prakiraan Cuaca & Webcam Langsung",
     description:
-      "Aplikasi cuaca Indonesia dengan data real-time dari Open-Meteo dan peta interaktif dari Windy.com",
+      "Aplikasi cuaca Indonesia dengan data real-time dari Windy GFS, peta interaktif Windy, dan webcam langsung",
     type: "website",
   },
 };
